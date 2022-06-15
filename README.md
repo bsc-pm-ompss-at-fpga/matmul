@@ -1,8 +1,8 @@
 # Matmul (FPGA devices version)
 
-**Name**: Matrix Multiplication Kernel  
-**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es  
-**License Agreement**: GPL 3.0  
+**Name**: Matrix Multiplication Kernel
+**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es
+**License Agreement**: GPL 3.0
 **Platform**: OmpSs@FPGA
 
 
@@ -14,7 +14,7 @@ The task implementation may be changed if support for some external library is e
 ### Build instructions
 Clone the repository:
 ```
-git clone https://github.com/bsc-pm-ompss-at-fpga/Matmul.git
+git clone https://github.com/bsc-pm-ompss-at-fpga/matmul.git
 cd matmul
 ```
 
