@@ -17,76 +17,83 @@ FORCE:
 
 PROGRAM_ = matmul
 
-# Required FPGA bitstream variables
-#FPGA_HWRUNTIME         ?= som
+common-help:
+	@echo 'Supported targets:           $(PROGRAM_)-p, $(PROGRAM_)-i, $(PROGRAM_)-d, $(PROGRAM_)-seq, design-p, design-i, design-d, bitstream-p, bitstream-i, bitstream-d, clean, help'
+	@echo 'FPGA env. variables:         BOARD, FPGA_CLOCK, FPGA_MEMORY_PORT_WIDTH, MEMORY_INTERLEAVING_STRIDE, SIMPLIFY_INTERCONNECTION, INTERCONNECT_OPT, INTERCONNECT_REGSLICE, FLOORPLANNING_CONSTR, SLR_SLICES, PLACEMENT_FILE'
+	@echo 'Benchmark env. variables:    MATMUL_BLOCK_SIZE, MATMUL_BLOCK_II, MATMUL_NUM_ACCS'
+
+# FPGA bitstream parameters
 FPGA_CLOCK             ?= 200
+FPGA_HWRUNTIME         ?= pom
 FPGA_MEMORY_PORT_WIDTH ?= 128
 INTERCONNECT_OPT       ?= performance
-MATMUL_BLOCK_SIZE      ?= 64
-MATMUL_BLOCK_II        ?= 2
-MATMUL_NUM_ACCS        ?= 1
 
-COMPILER_FLAGS_ += -DMATMUL_BLOCK_SIZE=$(MATMUL_BLOCK_SIZE) -DMATMUL_BLOCK_II=$(MATMUL_BLOCK_II) -DMATMUL_NUM_ACCS=$(MATMUL_NUM_ACCS) -DFPGA_MEMORY_PORT_WIDTH=$(FPGA_MEMORY_PORT_WIDTH) -DBOARD=\"$(BOARD)\"
+# Matmul parameters
+MATMUL_BLOCK_SIZE ?= 64
+MATMUL_BLOCK_II   ?= 2
+MATMUL_NUM_ACCS   ?= 1
+
+# Preprocessor flags
+COMPILER_FLAGS_ += -DFPGA_HWRUNTIME=\"$(FPGA_HWRUNTIME)\" -DBOARD=\"$(BOARD)\" -DFPGA_MEMORY_PORT_WIDTH=$(FPGA_MEMORY_PORT_WIDTH) -DFPGA_CLOCK=$(FPGA_CLOCK)
+COMPILER_FLAGS_ += -DMATMUL_BLOCK_SIZE=$(MATMUL_BLOCK_SIZE) -DMATMUL_BLOCK_II=$(MATMUL_BLOCK_II) -DMATMUL_NUM_ACCS=$(MATMUL_NUM_ACCS)
 
 ifdef USE_URAM
 	COMPILER_FLAGS_ += -DUSE_URAM
 endif
 
-common-help:
-	@echo 'Supported targets:        $(PROGRAM_)-p, $(PROGRAM_)-i, $(PROGRAM_)-d, $(PROGRAM_)-seq, design-p, design-i, design-d, bitstream-p, bitstream-i, bitstream-d, clean, help'
-	@echo 'FPGA env. variables:      BOARD, FPGA_CLOCK'
-	@echo 'FPGA opt. env. variables: FPGA_MEMORY_PORT_WIDTH, MEMORY_INTERLEAVING_STRIDE, SIMPLIFY_INTERCONNECTION, INTERCONNECT_OPT, INTERCONNECT_REGSLICE, FLOORPLANNING_CONSTR, SLR_SLICES, PLACEMENT_FILE'
+PROGRAM_SRC = \
+    src/matmul.c
 
-$(PROGRAM_)-p: ./src/$(PROGRAM_).c
+$(PROGRAM_)-p: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $^ -o $@ $(LINKER_FLAGS_)
 
-$(PROGRAM_)-i: ./src/$(PROGRAM_).c
+$(PROGRAM_)-i: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_I_) $^ -o $@ $(LINKER_FLAGS_)
 
-$(PROGRAM_)-d: ./src/$(PROGRAM_).c
+$(PROGRAM_)-d: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_D_) $^ -o $@ $(LINKER_FLAGS_)
 
-$(PROGRAM_)-seq: ./src/$(PROGRAM_).c
+$(PROGRAM_)-seq: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $^ -o $@ $(LINKER_FLAGS_)
 
-design-p: ./src/$(PROGRAM_).c
+design-p: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
 	$(COMPILER_) $(COMPILER_FLAGS_) \
 		$(AIT_FLAGS_) $(AIT_FLAGS_DESIGN_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
 
-design-i: ./src/$(PROGRAM_).c
+design-i: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
-	$(COMPILER_) $(COMPILER_FLAGS_I_) \
+	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_I_) \
 		$(AIT_FLAGS_) $(AIT_FLAGS_DESIGN_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
 
-design-d: ./src/$(PROGRAM_).c
+design-d: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
-	$(COMPILER_) $(COMPILER_FLAGS_D_) \
+	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_D_) \
 		$(AIT_FLAGS_) $(AIT_FLAGS_DESIGN_) $(AIT_FLAGS_D_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
 
-bitstream-p: ./src/$(PROGRAM_).c
+bitstream-p: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
 	$(COMPILER_) $(COMPILER_FLAGS_) \
 		$(AIT_FLAGS_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
 
-bitstream-i: ./src/$(PROGRAM_).c
+bitstream-i: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
-	$(COMPILER_) $(COMPILER_FLAGS_I_) \
+	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_I_) \
 		$(AIT_FLAGS_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
 
-bitstream-d: ./src/$(PROGRAM_).c
+bitstream-d: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
-	$(COMPILER_) $(COMPILER_FLAGS_D_) \
+	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_D_) \
 		$(AIT_FLAGS_) $(AIT_FLAGS_D_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
