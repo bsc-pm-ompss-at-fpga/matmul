@@ -355,6 +355,7 @@ int main(int argc, char** argv) {
       "{ \
          \"benchmark\": \"%s\", \
          \"toolchain\": \"%s\", \
+         \"hwruntime\": \"%s\", \
          \"board\": \"%s\", \
          \"version\": \"%uaccs %uBS kij memport_128 noflush\", \
          \"exectype\": \"%s\", \
@@ -365,6 +366,7 @@ int main(int argc, char** argv) {
       }",
       "matmul",
       "ompss-2",
+      FPGA_HWRUNTIME,
       BOARD,
       MBLOCK_NUM_ACCS, BSIZE,
       RUNTIME_MODE,
