@@ -1,6 +1,19 @@
 .PHONY: clean
 all: help
 
+PROGRAM_ = matmul
+
+common-help:
+	@echo 'Supported targets:           $(PROGRAM_)-p, $(PROGRAM_)-i, $(PROGRAM_)-d, $(PROGRAM_)-seq, design-p, design-i, design-d, bitstream-p, bitstream-i, bitstream-d, clean, help'
+	@echo 'FPGA env. variables:         BOARD, FPGA_CLOCK, FPGA_MEMORY_PORT_WIDTH, MEMORY_INTERLEAVING_STRIDE, SIMPLIFY_INTERCONNECTION, INTERCONNECT_OPT, INTERCONNECT_REGSLICE, FLOORPLANNING_CONSTR, SLR_SLICES, PLACEMENT_FILE'
+	@echo 'Benchmark env. variables:    MATMUL_BLOCK_SIZE, MATMUL_BLOCK_II, MATMUL_NUM_ACCS'
+
+# FPGA bitstream parameters
+FPGA_CLOCK             ?= 200
+FPGA_HWRUNTIME         ?= pom
+FPGA_MEMORY_PORT_WIDTH ?= 128
+INTERCONNECT_OPT       ?= performance
+
 # Include the corresponding compiler makefile
 --setup: FORCE
   ifeq ($(COMPILER),llvm)
@@ -15,19 +28,6 @@ all: help
   endif
 FORCE:
 
-PROGRAM_ = matmul
-
-common-help:
-	@echo 'Supported targets:           $(PROGRAM_)-p, $(PROGRAM_)-i, $(PROGRAM_)-d, $(PROGRAM_)-seq, design-p, design-i, design-d, bitstream-p, bitstream-i, bitstream-d, clean, help'
-	@echo 'FPGA env. variables:         BOARD, FPGA_CLOCK, FPGA_MEMORY_PORT_WIDTH, MEMORY_INTERLEAVING_STRIDE, SIMPLIFY_INTERCONNECTION, INTERCONNECT_OPT, INTERCONNECT_REGSLICE, FLOORPLANNING_CONSTR, SLR_SLICES, PLACEMENT_FILE'
-	@echo 'Benchmark env. variables:    MATMUL_BLOCK_SIZE, MATMUL_BLOCK_II, MATMUL_NUM_ACCS'
-
-# FPGA bitstream parameters
-FPGA_CLOCK             ?= 200
-FPGA_HWRUNTIME         ?= pom
-FPGA_MEMORY_PORT_WIDTH ?= 128
-INTERCONNECT_OPT       ?= performance
-
 # Matmul parameters
 MATMUL_BLOCK_SIZE ?= 64
 MATMUL_BLOCK_II   ?= 2
@@ -40,6 +40,10 @@ COMPILER_FLAGS_ += -DMATMUL_BLOCK_SIZE=$(MATMUL_BLOCK_SIZE) -DMATMUL_BLOCK_II=$(
 ifdef USE_URAM
 	COMPILER_FLAGS_ += -DUSE_URAM
 endif
+
+COMPILER_FLAGS_   += -DRUNTIME_MODE=\"perf\"
+COMPILER_FLAGS_D_ += -DRUNTIME_MODE=\"debug\"
+COMPILER_FLAGS_I_ += -DRUNTIME_MODE=\"instr\"
 
 PROGRAM_SRC = \
     src/matmul.c

@@ -4,9 +4,9 @@ help: common-help
 	@echo 'Compiler env. variables:     CFLAGS, CROSS_COMPILE, LDFLAGS, MCC_FLAGS'
 
 COMPILER_         = $(CROSS_COMPILE)fpgacc
-COMPILER_FLAGS_   = $(CFLAGS) -O3 $(MCC_FLAGS) --ompss-2 --fpga -DRUNTIME_MODE=\"perf\"
-COMPILER_FLAGS_I_ = --instrument -DRUNTIME_MODE=\"instr\"
-COMPILER_FLAGS_D_ = --debug -g -k -DRUNTIME_MODE=\"debug\"
+COMPILER_FLAGS_   = $(CFLAGS) -O3 $(MCC_FLAGS) --ompss-2 --fpga
+COMPILER_FLAGS_I_ = --instrument
+COMPILER_FLAGS_D_ = --debug -g -k
 LINKER_FLAGS_     = $(LDFLAGS)
 
 AIT_FLAGS_        = --bitstream-generation --Wf,--name=$(PROGRAM_),--board=$(BOARD),-c=$(FPGA_CLOCK)
