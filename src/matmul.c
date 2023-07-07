@@ -75,13 +75,15 @@ void setBlockSeq(elem_t* v, int base) {
 #pragma oss task
 void checkBlock(unsigned int* check_ok, const elem_t* res, const elem_t* ref, const float threshold)
 {
-   for (unsigned int i = 0; i < BSIZE*BSIZE && ( *check_ok ); ++i) {
+   int block_ok = 1;
+   for (unsigned int i = 0; i < BSIZE*BSIZE && block_ok; ++i) {
       const elem_t res_val = res[i];
       const elem_t ref_val = ref[i];
       const elem_t maxv = ref_val * (1.0 + (ref_val < 0 ? -threshold : threshold));
       const elem_t minv = ref_val * (1.0 - (ref_val < 0 ? -threshold : threshold));
       //Check if not within range to also detect NaN
       if (! (res_val < maxv && res_val > minv)) {
+         block_ok = 0;
          *check_ok = 0;
          fprintf(stderr, "ERROR:\t Expected a %lf but found %lf.\n", (double)ref_val, (double)res_val);
       }
@@ -109,8 +111,8 @@ unsigned int matmulCheck(const unsigned int check, const elem_t* c, const unsign
             fprintf(stderr, "Cannot map '%s' as a reference solution\n", ref_filename);
             check_ok = 0;
          } else {
-            for (unsigned int i = 0; i < msize/BSIZE && check_ok; i++) {
-               for (unsigned int j = 0; j < msize/BSIZE && check_ok; j++) {
+            for (unsigned int i = 0; i < msize/BSIZE; i++) {
+               for (unsigned int j = 0; j < msize/BSIZE; j++) {
                   unsigned int const ci = j*b2size + i*BSIZE*msize;
                   checkBlock(&check_ok, &c[ci], &c_ref[ci], THRESHOLD);
                }
