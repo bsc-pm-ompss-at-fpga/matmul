@@ -80,7 +80,8 @@ void checkBlock(unsigned int* check_ok, const elem_t* res, const elem_t* ref, co
       const elem_t ref_val = ref[i];
       const elem_t maxv = ref_val * (1.0 + (ref_val < 0 ? -threshold : threshold));
       const elem_t minv = ref_val * (1.0 - (ref_val < 0 ? -threshold : threshold));
-      if (res_val > maxv || res_val < minv) {
+      //Check if not within range to also detect NaN
+      if (! (res_val < maxv && res_val > minv)) {
          *check_ok = 0;
          fprintf(stderr, "ERROR:\t Expected a %lf but found %lf.\n", (double)ref_val, (double)res_val);
       }
