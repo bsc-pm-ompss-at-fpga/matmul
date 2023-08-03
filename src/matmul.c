@@ -370,7 +370,7 @@ int main(int argc, char** argv) {
          \"toolchain\": \"%s\", \
          \"hwruntime\": \"%s\", \
          \"board\": \"%s\", \
-         \"version\": \"%uaccs %uBS kij memport_128 noflush\", \
+         \"version\": \"%uaccs %uBS kij memport_%u noflush\", \
          \"exectype\": \"%s\", \
          \"argv\": \"%d %d %s\", \
          \"exectime\": \"%f\", \
@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
       "ompss-2",
       FPGA_HWRUNTIME,
       BOARD,
-      MBLOCK_NUM_ACCS, BSIZE,
+      MBLOCK_NUM_ACCS, BSIZE, FPGA_MEMORY_PORT_WIDTH,
       RUNTIME_MODE,
       msize, BSIZE, createFromStr,
       tEndExec - tIniExec,
