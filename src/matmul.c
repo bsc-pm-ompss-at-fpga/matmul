@@ -31,6 +31,8 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#include "nanos6.h"
+
 // General definitions
 #include "matmul.h"
 #include "matmul.fpga.h"
@@ -303,7 +305,11 @@ int main(int argc, char** argv) {
    }
 
    //Noflush is not yet implemented
-   #pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
+   //#pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
+   nanos6_set_noflush(a, m2size*sizeof(*a));
+   nanos6_set_noflush(b, m2size*sizeof(*b));
+   nanos6_set_noflush(c, m2size*sizeof(*c));
+   #pragma oss taskwait
    const double tEndWarm = wall_time();
    const double tIniExec = tEndWarm;
 
@@ -314,14 +320,18 @@ int main(int argc, char** argv) {
      matmulSMP(a, b, c, msize);
    }
 
-   //taskwait is not implemented (yet)
-   #pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
+   //taskwait noflush is not implemented (yet)
+   //#pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
+   nanos6_set_noflush(a, m2size*sizeof(*a));
+   nanos6_set_noflush(b, m2size*sizeof(*b));
+   nanos6_set_noflush(c, m2size*sizeof(*c));
+   #pragma oss taskwait
    const double tEndExec = wall_time();
    const double tIniFlush = tEndExec;
 
    //This would be needed in case of using noflush
-   //flushData(c, m2size);
-   //#pragma oss taskwait
+   flushData(c, m2size);
+   #pragma oss taskwait
    const double tEndFlush = wall_time();
    const double tIniCheck = tEndFlush;
 
