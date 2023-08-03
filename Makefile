@@ -46,7 +46,7 @@ COMPILER_FLAGS_   += -DRUNTIME_MODE=\"perf\"
 COMPILER_FLAGS_D_ += -DRUNTIME_MODE=\"debug\"
 COMPILER_FLAGS_I_ += -DRUNTIME_MODE=\"instr\"
 
-COMPILER_FLAGS  += -I$(NANOS6_HOME)/include
+COMPILER_FLAGS_  += -I$(NANOS6_HOME)/include
 LINKER_FLAGS_ +=  -L$(NANOS6_HOME)/lib -lnanos6-optimized-regions
 
 PROGRAM_SRC = \
