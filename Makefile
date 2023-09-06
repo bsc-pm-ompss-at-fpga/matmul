@@ -22,8 +22,8 @@ INTERCONNECT_OPT       ?= performance
     ifeq ($(COMPILER),mcxx)
       include mcxx.mk
     else
-      $(info No valid COMPILER variable defined, using mcxx)
-      include mcxx.mk
+      $(info No valid COMPILER variable defined, using llvm)
+      include llvm.mk
     endif
   endif
 FORCE:
