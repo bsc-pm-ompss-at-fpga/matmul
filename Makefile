@@ -42,6 +42,18 @@ ifdef USE_URAM
 	COMPILER_FLAGS_ += -DUSE_URAM
 endif
 
+ifdef USE_DOUBLE
+	COMPILER_FLAGS_ += -DUSE_DOUBLE
+else ifdef USE_HALF
+	COMPILER_FLAGS_ += -DUSE_HALF -I$(VIVADO_DIR)/include -DHLS_NO_XIL_FPO_LIB
+	#gmp and mpfr are expected to be installed, otherwise compile using vivado libraries
+	# by uncommenting the following line
+	# LINKER_FLAGS_ += -L$(VIVADO_DIR)lib/lnx64.o/Ubuntu
+	VIVADO_DIR=/tools/Xilinx/Vivado/2020.1
+	LINKER_FLAGS_  += -L$(VIVADO_DIR)//lnx64/tools/fpo_v7_0/ -lIp_floating_point_v7_0_bitacc_cmodel -lmpfr -lgmp
+endif
+
+
 COMPILER_FLAGS_   += -DRUNTIME_MODE=\"perf\"
 COMPILER_FLAGS_D_ += -DRUNTIME_MODE=\"debug\"
 COMPILER_FLAGS_I_ += -DRUNTIME_MODE=\"instr\"
@@ -50,7 +62,7 @@ COMPILER_FLAGS_  += -I$(NANOS6_HOME)/include
 LINKER_FLAGS_ +=  -L$(NANOS6_HOME)/lib -lnanos6-optimized-regions
 
 PROGRAM_SRC = \
-    src/matmul.c
+    src/matmul.cpp
 
 $(PROGRAM_)-p: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $^ -o $@ $(LINKER_FLAGS_)
