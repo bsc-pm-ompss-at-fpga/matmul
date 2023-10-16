@@ -60,9 +60,9 @@ void flushData(elem_t *data, int m2size) {
 }
 
 #pragma oss task
-void setBlock(elem_t* v, const elem_t val) {
+void setBlock(elem_t* v, const elem_t *val) {
    for (unsigned int i = 0; i < BSIZE*BSIZE; ++i) {
-      v[i] = val;
+      v[i] = *val;
    }
 }
 
@@ -287,10 +287,11 @@ int main(int argc, char** argv) {
    double tIniStart = wall_time();
 
    srand(2019);
+   elem_t setValue = 0;
    for (unsigned int i = 0; i < m2size/b2size; i++) {
       setBlockSeq(&a[i*b2size], rand());
       setBlockSeq(&b[i*b2size], rand());
-      setBlock(&c[i*b2size], 0);
+      setBlock(&c[i*b2size], &setValue);
    }
 
    #pragma oss taskwait
