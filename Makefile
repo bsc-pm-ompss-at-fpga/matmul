@@ -51,6 +51,7 @@ else ifdef USE_HALF
 	# LINKER_FLAGS_ += -L$(VIVADO_DIR)lib/lnx64.o/Ubuntu
 	VIVADO_DIR=/tools/Xilinx/Vivado/2020.1
 	LINKER_FLAGS_  += -L$(VIVADO_DIR)//lnx64/tools/fpo_v7_0/ -lIp_floating_point_v7_0_bitacc_cmodel -lmpfr -lgmp
+	LINKER_FLAGS_ += -Wl,-rpath=$(VIVADO_DIR)/lnx64/tools/fpo_v7_0/
 endif
 
 
