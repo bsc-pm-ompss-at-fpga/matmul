@@ -55,7 +55,7 @@ void usage (char* argv0) {
 }
 
 #pragma oss task in([m2size]data)
-void flushData(float *data, int m2size) {
+void flushData(elem_t *data, int m2size) {
     //dummy task to pull data from fpga
 }
 
