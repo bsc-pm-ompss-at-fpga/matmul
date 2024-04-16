@@ -38,9 +38,6 @@
 #  include <cblas.h>
 #endif
 
-#ifndef RUNTIME_MODE
-#  define RUNTIME_MODE "unknown"
-#endif
 #ifndef MATMUL_BLOCK_SIZE
 #  error MATMUL_BLOCK_SIZE variable not defined
 #endif

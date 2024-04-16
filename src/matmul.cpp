@@ -383,7 +383,7 @@ int main(int argc, char** argv) {
       FPGA_HWRUNTIME,
       BOARD,
       MBLOCK_NUM_ACCS, BSIZE, FPGA_MEMORY_PORT_WIDTH,
-      RUNTIME_MODE,
+      getenv("RUNTIME_MODE"),
       msize, BSIZE, createFromStr,
       tEndExec - tIniExec,
       gflops,
