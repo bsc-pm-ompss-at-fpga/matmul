@@ -54,9 +54,6 @@ else ifdef USE_HALF
 	LINKER_FLAGS_ += -Wl,-rpath=$(VIVADO_DIR)/lnx64/tools/fpo_v7_0/
 endif
 
-COMPILER_FLAGS_  += -I$(NANOS6_HOME)/include
-LINKER_FLAGS_ +=  -L$(NANOS6_HOME)/lib -lnanos6-optimized-regions
-
 PROGRAM_SRC = \
     src/matmul.cpp
 

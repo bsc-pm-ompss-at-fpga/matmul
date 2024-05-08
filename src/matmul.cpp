@@ -31,8 +31,6 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-#include "nanos6.h"
-
 // General definitions
 #include "matmul.h"
 #include "matmul.fpga.h"

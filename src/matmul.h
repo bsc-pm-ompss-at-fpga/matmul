@@ -32,6 +32,9 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <nanos6/devices.h>
+#include <nanos6/fpga_device.h>
+
 #ifdef USE_MKL
 #  include <mkl.h>
 #elif USE_OPENBLAS
