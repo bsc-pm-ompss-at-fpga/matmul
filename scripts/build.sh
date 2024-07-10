@@ -48,7 +48,7 @@ else
   printf "\"hwruntime\": \"${FPGA_HWRUNTIME}\", " >>$RES_FILE
   printf "\"board\": \"${BOARD}\", " >>$RES_FILE
   printf "\"builder\": \"${CI_NODE}\", " >>$RES_FILE
-  printf "\"version\": \"${MATMUL_NUM_ACCS}accs ${MATMUL_BLOCK_SIZE}BS kij memport_128 noflush\", " >>$RES_FILE
+  printf "\"version\": \"${MATMUL_NUM_ACCS}accs ${MATMUL_BLOCK_SIZE}BS kij memport_${FPGA_MEMORY_PORT_WIDTH} noflush\", " >>$RES_FILE
   printf "\"accels_freq\": \"${FPGA_CLOCK}\", " >>$RES_FILE
   printf "\"memory_port_width\": \"${FPGA_MEMORY_PORT_WIDTH}" >>$RES_FILE
   for PARAM in BRAM DSP FF LUT; do
