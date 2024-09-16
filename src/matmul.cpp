@@ -378,7 +378,7 @@ int main(int argc, char** argv) {
       }",
       "matmul",
       "ompss-2",
-      FPGA_HWRUNTIME,
+      "pom",
       BOARD,
       MBLOCK_NUM_ACCS, BSIZE, FPGA_MEMORY_PORT_WIDTH,
       getenv("RUNTIME_MODE"),
