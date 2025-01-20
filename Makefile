@@ -1,31 +1,72 @@
-.PHONY: clean
+.PHONY: clean all help
 all: help
 
 PROGRAM_ = matmul
 
-common-help:
+help:
 	@echo 'Supported targets:           $(PROGRAM_)-p, $(PROGRAM_)-i, $(PROGRAM_)-d, $(PROGRAM_)-seq, design-p, design-i, design-d, bitstream-p, bitstream-i, bitstream-d, clean, help'
 	@echo 'FPGA env. variables:         BOARD, FPGA_CLOCK, FPGA_MEMORY_PORT_WIDTH, MEMORY_INTERLEAVING_STRIDE, SIMPLIFY_INTERCONNECTION, INTERCONNECT_OPT, INTERCONNECT_REGSLICE, FLOORPLANNING_CONSTR, SLR_SLICES, PLACEMENT_FILE'
 	@echo 'Benchmark env. variables:    MATMUL_BLOCK_SIZE, MATMUL_BLOCK_II, MATMUL_NUM_ACCS'
+	@echo 'Compiler env. variables:     CFLAGS, CROSS_COMPILE, LDFLAGS'
 
 # FPGA bitstream parameters
 FPGA_CLOCK             ?= 200
 FPGA_MEMORY_PORT_WIDTH ?= 128
 INTERCONNECT_OPT       ?= performance
 
-# Include the corresponding compiler makefile
---setup: FORCE
-  ifeq ($(COMPILER),llvm)
-    include llvm.mk
-  else
-    ifeq ($(COMPILER),mcxx)
-      include mcxx.mk
-    else
-      $(info No valid COMPILER variable defined, using llvm)
-      include llvm.mk
-    endif
-  endif
-FORCE:
+CLANG_TARGET =
+ifdef CROSS_COMPILE
+	CLANG_TARGET += -target $(CROSS_COMPILE)
+endif
+
+COMPILER_         = clang++
+COMPILER_FLAGS_   = $(CFLAGS) $(CLANG_TARGET) -fompss-2 -fompss-fpga-wrapper-code
+COMPILER_FLAGS_I_ = -fompss-fpga-instrumentation
+COMPILER_FLAGS_D_ = -g -fompss-fpga-hls-tasks-dir $(PWD)
+LINKER_FLAGS_     = $(LDFLAGS)
+
+AIT_FLAGS__        = --name=$(PROGRAM_) --board=$(BOARD) -c=$(FPGA_CLOCK)
+AIT_FLAGS_DESIGN__ = --to_step=design
+AIT_FLAGS_D__      = --debug_intfs=both -k -i -v
+
+# Optional optimization FPGA variables
+ifdef FPGA_MEMORY_PORT_WIDTH
+	COMPILER_FLAGS_ += -fompss-fpga-memory-port-width $(FPGA_MEMORY_PORT_WIDTH)
+endif
+ifdef MEMORY_INTERLEAVING_STRIDE
+	AIT_FLAGS__ += --memory_interleaving_stride=$(MEMORY_INTERLEAVING_STRIDE)
+endif
+ifdef SIMPLIFY_INTERCONNECTION
+	AIT_FLAGS__ += --simplify_interconnection
+endif
+ifdef INTERCONNECT_PRIORITIES
+	AIT_FLAGS__ += --interconnect_priorities
+endif
+ifdef INTERCONNECT_OPT
+	AIT_FLAGS__ += --interconnect_opt=$(INTERCONNECT_OPT)
+endif
+ifdef INTERCONNECT_REGSLICE
+	AIT_FLAGS__ += --interconnect_regslice=$(INTERCONNECT_REGSLICE)
+endif
+ifdef FLOORPLANNING_CONSTR
+	AIT_FLAGS__ += --floorplanning_constr=$(FLOORPLANNING_CONSTR)
+endif
+ifdef SLR_SLICES
+	AIT_FLAGS__ += --slr_slices=$(SLR_SLICES)
+endif
+ifdef PLACEMENT_FILE
+	AIT_FLAGS__ += --placement_file=$(PLACEMENT_FILE)
+endif
+ifdef DISABLE_UTILIZATION_CHECK
+	AIT_FLAGS__ += --disable_utilization_check
+endif
+ifdef DISABLE_CREATOR_PORTS
+	AIT_FLAGS__ += --disable_creator_ports
+endif
+
+AIT_FLAGS_        = -fompss-fpga-ait-flags "$(AIT_FLAGS__)"
+AIT_FLAGS_DESIGN_ = -fompss-fpga-ait-flags "$(AIT_FLAGS_DESIGN__)"
+AIT_FLAGS_D_      = -fompss-fpga-ait-flags "$(AIT_FLAGS_D__)"
 
 # Matmul parameters
 MATMUL_BLOCK_SIZE ?= 64
@@ -54,7 +95,7 @@ else ifdef USE_HALF
 endif
 
 PROGRAM_SRC = \
-    src/matmul.cpp
+	src/matmul.cpp
 
 $(PROGRAM_)-p: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $^ -o $@ $(LINKER_FLAGS_)
@@ -109,4 +150,8 @@ bitstream-d: $(PROGRAM_SRC)
 		$(AIT_FLAGS_) $(AIT_FLAGS_D_) \
 		$^ -o $(TMPFILE) $(LINKER_FLAGS_)
 	rm $(TMPFILE)
+
+clean:
+	rm -fv *.o $(PROGRAM_)-? $(PROGRAM_)_hls_automatic_clang.cpp ait_extracted.json
+	rm -frv $(PROGRAM_)_ait
 
