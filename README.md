@@ -1,8 +1,8 @@
 # Matmul (FPGA devices version)
 
-**Name**: Matrix Multiplication Kernel  
-**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es  
-**License Agreement**: GPL  
+**Name**: Matrix Multiplication Kernel
+**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es
+**License Agreement**: GPL
 **Platform**: OmpSs@FPGA
 
 
@@ -29,14 +29,7 @@ The supported ones are:
     - `-DUSE_DOUBLE`. The matrix elements are of type `double` instead of `float`.
     - `-DUSE_IMPLEMENTS`. Enable the implements feature. Then, matmulBlock function will have two targets: FPGA and SMP (implemented using OPENBLAS, MKL, or basic C code).
   - `LDFLAGS`
-  - `MCC`. If not defined, the default value is: `fpgacc`.
   - `CROSS_COMPILE`
-  - `MKL_DIR`. Installation directory of MKL library (only used for the implements feature). The default value is: `$MKLROOT`.
-    - `MKL_INC_DIR`. Installation directory of includes for MKL library. The default value is: `$MKL_DIR/include`.
-    - `MKL_LIB_DIR`. Installation directory of OS libraries for MKL library. The default value is: `$MKL_DIR/lib`.
-  - `OPENBLAS_DIR`. Installation directory of OpenBLAS library (only used for the implements feature). The default value is: `$OPENBLAS_HOME`.
-    - `OPENBLAS_INC_DIR`. Installation directory of includes for OpenBLAS library. The default value is: `$OPENBLAS_DIR/include`.
-    - `OPENBLAS_LIB_DIR`. Installation directory of OS libraries for OpenBLAS library. The default value is: `$OPENBLAS_DIR/lib`.
   - `BOARD`. Board option used when generating the bitstreams.
   - `FPGA_CLOCK`. Target frequency of FPGA accelerators in the bitstreams. The default value is: `200`.
   - `FPGA_MEMORY_PORT_WIDTH`. Bit-width of accelerators memory port to access main memory. The default value is: `128`.
