@@ -169,37 +169,6 @@ void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_
    }
 }
 
-#if defined(USE_IMPLEMENTS)
-//#pragma omp target device(smp) copy_deps implements(matmulBlock)
-#pragma omp target device(smp) no_copy_deps implements(matmulBlock) copy_inout([BSIZE*BSIZE]c)
-#pragma omp task in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c)
-void matmulBlockSmp(elem_t *a, elem_t *b, elem_t *c) {
-#if defined(USE_MKL)
-   elem_t const alpha = 1.0;
-   elem_t const beta = 1.0;
-   char const transa = 'n';
-   char const transb = 'n';
-   GEMM(&transa, &transb, &BSIZE, &BSIZE, &BSIZE, &alpha, a,
-         &BSIZE, b, &BSIZE, &beta, c, &BSIZE);
-#elif defined(USE_OPENBLAS)
-   elem_t const alpha = 1.0;
-   elem_t const beta = 1.0;
-   cblas_gemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, BSIZE, BSIZE,
-      BSIZE, alpha, a, BSIZE, b, BSIZE, beta, c, BSIZE);
-#else
-   for (unsigned int i = 0; i < BSIZE; ++i) {
-      for (unsigned int j = 0; j < BSIZE; ++j) {
-         elem_t l = 0;
-         for (unsigned int k = 0; k < BSIZE; ++k) {
-            l += a[i*BSIZE + k] * b[k*BSIZE + j];
-         }
-         c[i*BSIZE + j] += l;
-      }
-   }
-#endif
-}
-#endif // defined(USE_IMPLEMENTS)
-
 #pragma oss task device(fpga) in([msize*msize]a, [msize*msize]b) inout([msize*msize]c)
 void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize) {
 #pragma HLS inline
@@ -218,7 +187,7 @@ void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int 
             const unsigned int ai = k*b2size + i*BSIZE*msize;
             const unsigned int bi = j*b2size + k*BSIZE*msize;
             const unsigned int ci = ll*b2size;
-	    //Not implemented yet
+            //Not implemented yet
             //#pragma oss taskcall affinity(ll-l)
             matmulBlock(a + ai, b + bi, c + ci, ll-l);
          }

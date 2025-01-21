@@ -35,12 +35,6 @@
 #include <nanos6/devices.h>
 #include <nanos6/fpga_device.h>
 
-#ifdef USE_MKL
-#  include <mkl.h>
-#elif USE_OPENBLAS
-#  include <cblas.h>
-#endif
-
 #ifndef MATMUL_BLOCK_SIZE
 #  error MATMUL_BLOCK_SIZE variable not defined
 #endif
@@ -56,28 +50,6 @@
 
 // Global variables
 const float THRESHOLD = 1e-4;
-//const unsigned int BSIZE = MATMUL_BLOCK_SIZE;
-//const unsigned int MBLOCK_II = MATMUL_BLOCK_II;
-//const unsigned int MBLOCK_FPGA_PWIDTH = FPGA_MEMORY_PORT_WIDTH;
-//const unsigned int MBLOCK_NUM_ACCS = MATMUL_NUM_ACCS;
-
-// Elements type
-//#if defined(USE_DOUBLE)
-//   typedef double     elem_t;
-//#  define  ELEM_T_STR "double"
-//#else
-//   typedef float      elem_t;
-//#  define  ELEM_T_STR "float"
-//#endif /* defined(USE_FLOAT) */
-
-// MKL/OpenBLAS interface
-#if defined(USE_DOUBLE)
-#  define  GEMM       DGEMM
-#  define  cblas_gemm cblas_dgemm
-#else
-#  define  GEMM       SGEMM
-#  define  cblas_gemm cblas_sgemm
-#endif /* defined(USE_FLOAT) */
 
 double wall_time () {
    struct timespec ts;
