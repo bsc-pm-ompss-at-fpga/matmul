@@ -32,8 +32,18 @@
 #include <sys/time.h>
 #include <time.h>
 
+#ifndef MATMUL_SEQ
 #include <nanos6/devices.h>
 #include <nanos6/fpga_device.h>
+#else
+#define MATMUL_BLOCK_II 1
+#define MATMUL_NUM_ACCS 1
+#define FPGA_MEMORY_PORT_WIDTH 1
+#define BOARD ""
+#define FPGA_HWRUNTIME ""
+//Define dummy functions for sequential version
+void nanos6_set_noflush(void *p, size_t size) {}
+#endif
 
 #ifndef MATMUL_BLOCK_SIZE
 #  error MATMUL_BLOCK_SIZE variable not defined

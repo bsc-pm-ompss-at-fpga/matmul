@@ -106,8 +106,9 @@ $(PROGRAM_)-i: $(PROGRAM_SRC)
 $(PROGRAM_)-d: $(PROGRAM_SRC)
 	$(COMPILER_) $(COMPILER_FLAGS_) $(COMPILER_FLAGS_D_) $^ -o $@ $(LINKER_FLAGS_)
 
+#FIXME: properly compile for ints, doubles, etc.
 $(PROGRAM_)-seq: $(PROGRAM_SRC)
-	$(COMPILER_) $(COMPILER_FLAGS_) $^ -o $@ $(LINKER_FLAGS_)
+	$(COMPILER_) $(CFLAGS) -DMATMUL_BLOCK_SIZE=$(MATMUL_BLOCK_SIZE) -DMATMUL_SEQ $^ -o $@ $(LINKER_FLAGS_)
 
 design-p: $(PROGRAM_SRC)
 	$(eval TMPFILE := $(shell mktemp))
