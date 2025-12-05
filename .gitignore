@@ -4,4 +4,6 @@ matmul
 matmul-*
 *.ref
 ref
-*_autoVivado
+*_ait
+*.log
+*.swp

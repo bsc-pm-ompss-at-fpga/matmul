@@ -1,0 +1,21 @@
+{
+    "accs": {
+        "matmulFPGA": {
+            "instances": {
+                "0": {
+                    "interfaces": {
+                        "a": {
+                            "dst": "None"
+                        },
+                        "b": {
+                            "dst": "None"
+                        },
+                        "c": {
+                            "dst": "None"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

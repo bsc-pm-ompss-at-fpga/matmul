@@ -36,8 +36,8 @@ endif
 ifdef MEMORY_INTERLEAVING_STRIDE
 	AIT_FLAGS__ += --memory_interleaving_stride=$(MEMORY_INTERLEAVING_STRIDE)
 endif
-ifdef SIMPLIFY_INTERCONNECTION
-	AIT_FLAGS__ += --simplify_interconnection
+ifdef USER_CONFIG
+	AIT_FLAGS__ += --user_config=$(USER_CONFIG)
 endif
 ifdef INTERCONNECT_PRIORITIES
 	AIT_FLAGS__ += --interconnect_priorities
@@ -45,17 +45,8 @@ endif
 ifdef INTERCONNECT_OPT
 	AIT_FLAGS__ += --interconnect_opt=$(INTERCONNECT_OPT)
 endif
-ifdef INTERCONNECT_REGSLICE
-	AIT_FLAGS__ += --interconnect_regslice=$(INTERCONNECT_REGSLICE)
-endif
-ifdef FLOORPLANNING_CONSTR
-	AIT_FLAGS__ += --floorplanning_constr=$(FLOORPLANNING_CONSTR)
-endif
-ifdef SLR_SLICES
-	AIT_FLAGS__ += --slr_slices=$(SLR_SLICES)
-endif
-ifdef PLACEMENT_FILE
-	AIT_FLAGS__ += --placement_file=$(PLACEMENT_FILE)
+ifdef INTERCONNECT_REGSLICES
+	AIT_FLAGS__ += --interconnect_regslices
 endif
 ifdef DISABLE_UTILIZATION_CHECK
 	AIT_FLAGS__ += --disable_utilization_check
