@@ -1,10 +1,9 @@
-# Matmul (FPGA devices version)
+# Matmul (FPGA version)
 
-**Name**: Matrix Multiplication Kernel  
-**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es  
-**License Agreement**: GPL  
+**Name**: Matrix Multiplication Kernel
+**Contact Person**: OmpSs@FPGA Team, ompss-fpga-support@bsc.es
+**License Agreement**: GPL
 **Platform**: OmpSs@FPGA
-
 
 ### Description
 This application performs the multiplication of two square matrices. The matrices are allocated by blocks of contiguous memory.
@@ -13,15 +12,19 @@ The task implementation may be changed if support for some external library is e
 
 ### Build instructions
 Clone the repository:
-```
-git clone https://pm.bsc.es/gitlab/ompss-at-fpga/benchmarks/matmul.git
+
+```bash
+git clone https://gitlab.pm.bsc.es/ompss-at-fpga/ompss-2-at-fpga-applications/benchmarks/matmul.git
 cd matmul
 ```
 
 Build the application binaries:
-```
+
+```bash
 make BOARD=zedboard CROSS_COMPILE=arm-linux-gnueabihf-
+make BOARD=zcu102 CROSS_COMPILE=aarch64-linux-gnu-
 ```
+
 ##### Build variables
 You can change the build process defining or modifying some environment variables.
 The supported ones are:
@@ -34,27 +37,30 @@ The supported ones are:
   - `FPGA_CLOCK`. Target frequency of FPGA accelerators in the bitstreams. The default value is: `200`.
   - `FPGA_MEMORY_PORT_WIDTH`. Bit-width of accelerators memory port to access main memory. The default value is: `128`.
   - `MATMUL_BLOCK_SIZE`. Dimension of matrix blocks that FPGA accelerators deal with. The default value is: `64`.
-  - `MATMUL_NUM_ACCS`. Number of FPGA accelerators for matmulBlock task. The default value is: `1`.
   - `MATMUL_BLOCK_II`. Initiation interval, in cycles, for matmulBlock middle loop. The default value is: `2`.
+  - `MATMUL_NUM_ACCS`. Number of FPGA accelerators for matmulBlock task. The default value is: `1`.
 
 To check the correct support detection of backend libraries, you can use the `make info` target once the environment variables are properly set.
 
 For example, the build step to cross-compile the application for ARM may be:
-```
+
+```bash
 export CROSS_COMPILE=arm-linux-gnueabihf-
 make matmul-d bitstream-p
 ```
 
 ### Run instructions
 The name of each binary file created by build step ends with a suffix which determines the version:
- - program-p: performance version
- - program-i: instrumented version
- - program-d: debug version
+ - matmul-p: performance version
+ - matmul-i: instrumented version
+ - matmul-d: debug version
 
 All versions use the same arguments structure:
-```
+
+```bash
 ./matmul-p <matrix size> <check> <create from>
 ```
+
 where:
  - `matrix size` (Mandatory) is the dimension of the matrices.
  - `check` (Mandatory) defines if the result must be checked.
