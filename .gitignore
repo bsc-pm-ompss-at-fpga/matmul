@@ -1,9 +1,7 @@
-*.o
-*_matmul.c
-matmul
 matmul-*
-*.ref
-ref
+*.o
+*_hls_automatic_clang.pp
+*.swp
 *_ait
 *.log
-*.swp
+ait_extracted.json

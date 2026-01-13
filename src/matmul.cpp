@@ -326,42 +326,5 @@ int main(int argc, char** argv) {
    printf( "  Performance (GFLOPS):  %f\n", gflops );
    printf( "================================================== \n" );
 
-   //Create the JSON result file
-   FILE *res_file = fopen("test_result.json", "w+");
-   if (res_file == NULL) {
-      printf( "Cannot open 'test_result.json' file\n" );
-      exit(1);
-   }
-   fprintf(res_file,
-      "{ \
-         \"benchmark\": \"%s\", \
-         \"toolchain\": \"%s\", \
-         \"hwruntime\": \"%s\", \
-         \"board\": \"%s\", \
-         \"version\": \"%uaccs %uBS kij memport_%u noflush\", \
-         \"exectype\": \"%s\", \
-         \"argv\": \"%d %d %s\", \
-         \"exectime\": \"%f\", \
-         \"performance\": \"%f\", \
-         \"note\": \"datatype %s, init %f, warm %f, exec %f, flush %f, check %f\" \
-      }",
-      "matmul",
-      "ompss-2",
-      "pom",
-      BOARD,
-      MBLOCK_NUM_ACCS, BSIZE, FPGA_MEMORY_PORT_WIDTH,
-      getenv("RUNTIME_MODE"),
-      msize, BSIZE, createFromStr,
-      tEndExec - tIniExec,
-      gflops,
-      ELEM_T_STR,
-      tEndStart - tIniStart,
-      tEndWarm - tIniWarm,
-      tEndExec - tIniExec,
-      tEndFlush - tIniFlush,
-      tEndCheck - tIniCheck
-   );
-   fclose(res_file);
-
    return check_ok ? 0 : 1;
 }
