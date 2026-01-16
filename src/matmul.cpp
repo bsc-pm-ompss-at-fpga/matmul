@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
       exit(1);
    }
 
-   unsigned int s = m2size*sizeof(elem_t);
+   size_t s = m2size*sizeof(elem_t);
    elem_t* a = (elem_t *)(malloc(s));
    elem_t* b = (elem_t *)(malloc(s));
    elem_t* c = (elem_t *)(malloc(s));
