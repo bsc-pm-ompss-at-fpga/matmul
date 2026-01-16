@@ -142,9 +142,8 @@ unsigned int matmulCheck(const unsigned int check, const elem_t* c, const unsign
    return check_ok;
 }
 
-#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_deps in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c) affinity(af)
-void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_t c[BSIZE*BSIZE], int af)
-{
+#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_deps in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c)
+void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_t c[BSIZE*BSIZE]) {
    #pragma HLS INLINE
    #pragma HLS array_partition variable=a cyclic factor=MBLOCK_FPGA_PWIDTH/64
    #pragma HLS array_partition variable=b cyclic factor=BSIZE/(MBLOCK_II*2)
@@ -171,39 +170,18 @@ void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_
 
 #pragma oss task device(fpga) in([msize*msize]a, [msize*msize]b) inout([msize*msize]c)
 void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize) {
-#pragma HLS inline
-   const unsigned int factor = MBLOCK_NUM_ACCS;
    const unsigned int b2size = BSIZE*BSIZE;
-   const unsigned int num_blocks_side = msize/BSIZE;
-   const unsigned int num_blocks_matrix = msize*msize/b2size;
-   const unsigned int num_blocks_loop = num_blocks_matrix - num_blocks_matrix%factor;
-   const unsigned int max_created_count = 8*MBLOCK_NUM_ACCS;
-   for (unsigned int l = 0; l < num_blocks_loop; l+=factor) {
+   for (unsigned int i = 0; i < msize/BSIZE; i++) {
       for (unsigned int k = 0; k < msize/BSIZE; k++) {
-#pragma HLS loop_flatten off
-         for (unsigned int ll = l; ll < (l+factor); ll++) {
-            const unsigned int i = ll/num_blocks_side;
-            const unsigned int j = ll%num_blocks_side;
-            const unsigned int ai = k*b2size + i*BSIZE*msize;
-            const unsigned int bi = j*b2size + k*BSIZE*msize;
-            const unsigned int ci = ll*b2size;
-            //Not implemented yet
-            //#pragma oss taskcall affinity(ll-l)
-            matmulBlock(a + ai, b + bi, c + ci, ll-l);
+         unsigned int const ai = k*b2size + i*BSIZE*msize;
+         for (unsigned int j = 0; j < msize/BSIZE; j++) {
+            unsigned int const bi = j*b2size + k*BSIZE*msize;
+            unsigned int const ci = j*b2size + i*BSIZE*msize;
+            matmulBlock(a + ai, b + bi, c + ci);
          }
       }
    }
-   for (unsigned int k = 0; k < msize/BSIZE; k++) {
-      for (unsigned int l = num_blocks_loop; l < num_blocks_matrix; l++) {
-         const unsigned int i = l/num_blocks_side;
-         const unsigned int j = l%num_blocks_side;
-         const unsigned int ai = k*b2size + i*BSIZE*msize;
-         const unsigned int bi = j*b2size + k*BSIZE*msize;
-         const unsigned int ci = l*b2size;
-         matmulBlock(a + ai, b + bi, c + ci, 0xFF);
-      }
-      #pragma oss taskwait
-   }
+#pragma oss taskwait
 }
 
 void matmulSMP(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize) {
@@ -214,7 +192,7 @@ void matmulSMP(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int m
          for (unsigned int j = 0; j < msize/BSIZE; j++) {
             unsigned int const bi = j*b2size + k*BSIZE*msize;
             unsigned int const ci = j*b2size + i*BSIZE*msize;
-            matmulBlock(a + ai, b + bi, c + ci, 0xFF);
+            matmulBlock(a + ai, b + bi, c + ci);
          }
       }
    }
