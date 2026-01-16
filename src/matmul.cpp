@@ -142,7 +142,7 @@ unsigned int matmulCheck(const unsigned int check, const elem_t* c, const unsign
    return check_ok;
 }
 
-#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_deps in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c) affinity(af)
+#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) copy_inout([BSIZE*BSIZE]c) affinity(af)
 void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_t c[BSIZE*BSIZE], int af)
 {
    #pragma HLS INLINE
