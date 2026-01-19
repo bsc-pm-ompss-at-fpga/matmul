@@ -34,6 +34,7 @@
 // General definitions
 #include "matmul.h"
 #include "matmul.fpga.h"
+#include "nanos6/distributed.h"
 
 const unsigned int BSIZE = MATMUL_BLOCK_SIZE;
 const unsigned int MBLOCK_II = MATMUL_BLOCK_II;
@@ -41,15 +42,12 @@ const unsigned int MBLOCK_FPGA_PWIDTH = FPGA_MEMORY_PORT_WIDTH;
 const unsigned int MBLOCK_NUM_ACCS = MATMUL_NUM_ACCS;
 
 void usage (char* argv0) {
-   fprintf(stderr, "USAGE:\t%s <matrix size> <check> <create from>\n", argv0);
+   fprintf(stderr, "USAGE:\t%s <matrix size> <check>\n", argv0);
    fprintf(stderr, "      \t<block size> is fixed to %u\n", BSIZE);
    fprintf(stderr, "      \t<check> values:\n");
    fprintf(stderr, "      \t  - 0 to disable checking\n");
    fprintf(stderr, "      \t  - 1 to enable checking\n");
    fprintf(stderr, "      \t  - 2 to generate checking reference\n");
-   fprintf(stderr, "      \t<create from> values:\n");
-   fprintf(stderr, "      \t  - 0 to create block tasks in FPGA\n");
-   fprintf(stderr, "      \t  - 1 to create block tasks in SMP\n");
 }
 
 #pragma oss task in([m2size]data)
@@ -78,7 +76,8 @@ void checkBlock(unsigned int* check_ok, const elem_t* res, const elem_t* ref, co
    int block_ok = 1;
    for (unsigned int i = 0; i < BSIZE*BSIZE && block_ok; ++i) {
       const elem_t res_val = res[i];
-      const elem_t ref_val = ref[i];
+      //Divide by 2 to maintain compatibility with reference files and no warmup
+      const elem_t ref_val = ref[i]/2;
       const elem_t maxv = ref_val * (1.0 + (ref_val < 0 ? -threshold : threshold));
       const elem_t minv = ref_val * (1.0 - (ref_val < 0 ? -threshold : threshold));
       //Check if not within range to also detect NaN
@@ -142,8 +141,10 @@ unsigned int matmulCheck(const unsigned int check, const elem_t* c, const unsign
    return check_ok;
 }
 
-#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_deps in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c)
-void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_t c[BSIZE*BSIZE]) {
+#pragma oss task device(fpga) num_instances(MATMUL_NUM_ACCS) copy_deps \
+      in([BSIZE*BSIZE]a, [BSIZE*BSIZE]b) inout([BSIZE*BSIZE]c)
+void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_t c[BSIZE*BSIZE])
+{
    #pragma HLS INLINE
    #pragma HLS array_partition variable=a cyclic factor=MBLOCK_FPGA_PWIDTH/64
    #pragma HLS array_partition variable=b cyclic factor=BSIZE/(MBLOCK_II*2)
@@ -168,9 +169,13 @@ void matmulBlock(const elem_t a[BSIZE*BSIZE], const elem_t b[BSIZE*BSIZE], elem_
    }
 }
 
-#pragma oss task device(fpga) in([msize*msize]a, [msize*msize]b) inout([msize*msize]c)
-void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize) {
+#pragma oss task device(fpga) owner("all") in([msize*msize]a, [msize*msize]b) inout([msize*msize]c) \
+    data_dist("all", a, msize*msize) data_dist("all", b, msize*msize) data_dist("block", c, msize*msize)
+void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize, int nr) {
    const unsigned int b2size = BSIZE*BSIZE;
+   //unsigned int nr = OMPIF_Comm_size();
+
+   //Assume everything divides nicely
    for (unsigned int i = 0; i < msize/BSIZE; i++) {
       for (unsigned int k = 0; k < msize/BSIZE; k++) {
          unsigned int const ai = k*b2size + i*BSIZE*msize;
@@ -181,25 +186,12 @@ void matmulFPGA(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int 
          }
       }
    }
-#pragma oss taskwait
+   #pragma oss taskwait
 }
 
-void matmulSMP(const elem_t *a, const elem_t *b, elem_t *c, const unsigned int msize) {
-   const unsigned int b2size = BSIZE*BSIZE;
-   for (unsigned int i = 0; i < msize/BSIZE; i++) {
-      for (unsigned int k = 0; k < msize/BSIZE; k++) {
-         unsigned int const ai = k*b2size + i*BSIZE*msize;
-         for (unsigned int j = 0; j < msize/BSIZE; j++) {
-            unsigned int const bi = j*b2size + k*BSIZE*msize;
-            unsigned int const ci = j*b2size + i*BSIZE*msize;
-            matmulBlock(a + ai, b + bi, c + ci);
-         }
-      }
-   }
-}
 
 int main(int argc, char** argv) {
-   if (argc != 4) {
+   if (argc != 3) {
       usage(argv[0]);
       exit(1);
    }
@@ -208,19 +200,13 @@ int main(int argc, char** argv) {
    unsigned int const msize = atoi(argv[1]);
    unsigned int const m2size = msize*msize;
    unsigned char const check = atoi(argv[2]);
-   unsigned char const createFrom = atoi(argv[3]);
-   char const * createFromStr = createFrom == 0 ? "cFPGA" : "cHOST";
    if (msize%BSIZE != 0) {
       fprintf(stderr, "ERROR:\t<matrix size> must be multiple of <block size>\n");
       usage(argv[0]);
       exit(1);
-   } else if (createFrom > 1) {
-      fprintf(stderr, "ERROR:\tUnsupported value in <create from>\n");
-      usage(argv[0]);
-      exit(1);
    }
 
-   unsigned int s = m2size*sizeof(elem_t);
+   size_t s = m2size*sizeof(elem_t);
    elem_t* a = (elem_t *)(malloc(s));
    elem_t* b = (elem_t *)(malloc(s));
    elem_t* c = (elem_t *)(malloc(s));
@@ -243,47 +229,42 @@ int main(int argc, char** argv) {
    const double tEndStart = wall_time();
    const double tIniWarm = tEndStart;
 
-   //Warm up execution
-   if (createFrom == 0) {
-     matmulFPGA(a, b, c, msize);
-   } else if (createFrom == 1) {
-     matmulSMP(a, b, c, msize);
-   }
+   int nranks = nanos6_dist_num_devices();
+   nanos6_dist_map_address(a, m2size*sizeof(elem_t)/nranks);
+   nanos6_dist_map_address(b, m2size*sizeof(elem_t));
+   nanos6_dist_map_address(c, m2size*sizeof(elem_t)/nranks);
 
-   //Noflush is not yet implemented
-   //#pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
-   nanos6_set_noflush(a, m2size*sizeof(*a));
-   nanos6_set_noflush(b, m2size*sizeof(*b));
-   nanos6_set_noflush(c, m2size*sizeof(*c));
-   #pragma oss taskwait
+   //nanos6_dist_scatter(a, m2size*sizeof(elem_t)/nranks, 0, 0);
+   nanos6_dist_memcpy_to_all(a, m2size*sizeof(elem_t), 0, 0);
+   nanos6_dist_memcpy_to_all(b, m2size*sizeof(elem_t) , 0, 0);
+   //nanos6_dist_scatter(c, m2size*sizeof(elem_t)/nranks, 0, 0);
+   //nanos6_dist_memcpy_to_all(c, m2size*sizeof(elem_t, 0, 0);  //Set the whole matrix to 0
+
+   for (int i=0; i<nranks; i++) {
+       //void nanos6_dist_memcpy_to_device(int dev_id, const void* address, uint64_t size, uint64_t srcOffset, uint64_t dstOffset);
+       nanos6_dist_memcpy_to_device(i, c, (m2size/nranks)*sizeof(elem_t), (i*m2size/nranks)*sizeof(elem_t), (i*m2size/nranks)*sizeof(elem_t));
+   }
    const double tEndWarm = wall_time();
    const double tIniExec = tEndWarm;
 
    //Performance execution
-   if (createFrom == 0) {
-     matmulFPGA(a, b, c, msize);
-   } else if (createFrom == 1) {
-     matmulSMP(a, b, c, msize);
-   }
+   matmulFPGA(a, b, c, msize, nranks);
 
-   //taskwait noflush is not implemented (yet)
-   //#pragma oss taskwait noflush([m2size]a, [m2size]b, [m2size]c)
-   nanos6_set_noflush(a, m2size*sizeof(*a));
-   nanos6_set_noflush(b, m2size*sizeof(*b));
-   nanos6_set_noflush(c, m2size*sizeof(*c));
    #pragma oss taskwait
    const double tEndExec = wall_time();
    const double tIniFlush = tEndExec;
 
-   //This would be needed in case of using noflush
-   flushData(c, m2size);
-   #pragma oss taskwait
+   //nanos6_dist_gather(c, m2size*sizeof(elem_t)/nranks, 0, 0);
+   for (int i=0; i<nranks; i++) {
+       //void nanos6_dist_memcpy_from_device(int dev_id, void* address, uint64_t size, uint64_t srcOffset, uint64_t dstOffset);
+       nanos6_dist_memcpy_from_device(i, c, (m2size/nranks)*sizeof(elem_t), (i*m2size/nranks)*sizeof(elem_t), (i*m2size/nranks)*sizeof(elem_t));
+   }
+
    const double tEndFlush = wall_time();
    const double tIniCheck = tEndFlush;
 
    //Check the output matrix
    unsigned int check_ok = matmulCheck(check, c, msize);
-
    const double tEndCheck = wall_time();
 
    free(a);
@@ -295,11 +276,10 @@ int main(int argc, char** argv) {
    printf( "==================== RESULTS ===================== \n" );
    printf( "  Benchmark: %s (%s)\n", "Matmul", "OmpSs" );
    printf( "  Elements type: %s\n", ELEM_T_STR );
-   printf( "  Create from: %s\n", createFromStr );
-   printf( "  Init. time (secs):     %f\n", tEndStart  - tIniStart );
+   printf( "  Copy in time (secs):     %f\n", tEndStart  - tIniStart );
    printf( "  Warm up time (secs):   %f\n", tEndWarm   - tIniWarm );
    printf( "  Execution time (secs): %f\n", tEndExec   - tIniExec );
-   printf( "  Flush time (secs):     %f\n", tEndFlush  - tIniFlush );
+   printf( "  Copy out time (secs):     %f\n", tEndFlush  - tIniFlush );
    printf( "  Checking time (secs):  %f\n", tEndCheck  - tIniCheck );
    printf( "  Performance (GFLOPS):  %f\n", gflops );
    printf( "================================================== \n" );
